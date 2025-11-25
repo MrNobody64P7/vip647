@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Birthday Gift - Secret Surprise</title>
+  <style>
+    :root {
+      --bg: #0f1020;
+      --card: #1b1d2b;
+      --text: #ffffff;
+      --accent: #ff69b4;
+      --glass: rgba(255, 255, 255, 0.08);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto; background: radial-gradient(circle at 20% 0%, #2a0e3a 0%, #0f1020 60%), #0f1020; color: var(--text); }
+
+    .screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+    .hidden { display: none; }
+
+    .card {
+      width: min(700px, 92vw);
+      background: rgba(20, 20, 40, 0.92);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 28px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+    }
+
+    h1 { font-size: 2.2rem; margin: 0 0 0.5rem; letter-spacing: .5px; }
+    p { color: #e9e9e9; line-height: 1.5; }
+
+    .inputRow { display: flex; gap: .75rem; align-items: center; justify-content: center; margin-top: 1rem; flex-wrap: wrap; }
+    input[type="password"], input[type="text"] {
+      padding: .85rem 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.25);
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      width: min(360px, 70vw);
+    }
+    button {
+      padding: .9rem 1.25rem;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, #ff6ab6, #ff1e8a);
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:focus { outline: 2px solid #fff; outline-offset: 2px; }
+
+    .hint { color: #ffdede; margin-top: .5rem; height: 1.2em; }
+
+    /* Gift screen specifics */
+    #giftScreen { position: relative; padding-bottom: 100px; }
+    .confetti { position: absolute; left: 0; right: 0; bottom: 0; height: 60px; pointer-events: none; overflow: hidden; }
+    .confetti span {
+      position: absolute;
+      bottom: 0;
+      font-size: 1.4rem;
+      opacity: 0;
+      transform: translateY(0) rotate(0deg);
+      animation: rise 4s ease forwards;
+    }
+    @keyframes rise {
+      0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      100% { transform: translateY(-120px) translateX(var(--dx, 40px)) rotate(540deg); opacity: 0; }
+    }
+
+    .greeting { font-weight: 700; font-size: 2.3rem; margin: 0 0 .25rem; }
+    .subtitle { color: #d8d8d8; font-size: 1rem; margin: 0; }
+
+    .giftContent { margin: 1rem auto 1.25rem; max-width: 520px; padding: 1rem; background: rgba(255,255,255,.04); border-radius: 12px; border: 1px solid rgba(255,255,255,.08); }
+
+    .footerNote { font-size: .95rem; color: #d5d5d5; margin-top: 8px; }
+
+    @media (max-width: 520px) {
+      h1 { font-size: 1.9rem; }
+      .confetti { height: 40px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Login Screen -->
+  <section id="loginScreen" class="screen" aria-label="Login to view birthday gift">
+    <div class="card">
+      <h1>Open Birthday Gift</h1>
+      <p style="margin:0 0 6px;">Protect your surprise with a password. If you switch away or close the tab, you’ll be asked to re-enter it when you come back.</p>
+      <div class="inputRow" style="gap:.75rem;">
+        <input id="pwd" type="password" placeholder="Enter password" autocomplete="current-password" />
+        <button id="loginBtn" type="button">Open Gift</button>
+      </div>
+      <div class="hint" id="loginHint" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- Gift Screen -->
+  <section id="giftScreen" class="screen hidden" aria-label="Birthday gift content">
+    <div class="card" style="min-height: 420px;">
+      <div class="confetti" id="confetti" aria-hidden="true"></div>
+
+      <div class="greeting" id="greeting">Happy Birthday, Darling!</div>
+      <p class="subtitle" style="margin-top:.25rem;">A little surprise to brighten your day.</p>
+
+      <div class="giftContent" aria-label="Gift message">
+        <p>Dear <strong id="nameDisplay">Darling</strong>, on your special day,
+          may love, joy, and sweet memories fill every moment. Here’s to you and the many adventures ahead.
+        </p>
+        <p style="margin-top: .5rem;">With all my heart, this little gift is for you.</p>
+      </div>
+
+      <div class="inputRow" style="justify-content:center;">
+        <label for="recipient" style="opacity:.9; margin-right:.25rem;">Recipient name:</label>
+        <input id="recipient" type="text" placeholder="Enter name" />
+        <button id="saveNameBtn" type="button" style="margin-left:.25rem;">Save Name</button>
+      </div>
+
+      <div class="footerNote" style="text-align:center;">
+        Note: If you switch away from this tab or close it, you’ll be asked to re-enter the password when you return.
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Customize password here (client-side only)
+    const PASSWORD = "VISHNUMURTHY1437" // Change this to your preferred password
+
+    let isAuthenticated = false;
+
+    const loginScreen = document.getElementById('loginScreen');
+    const giftScreen = document.getElementById('giftScreen');
+    const loginBtn = document.getElementById('loginBtn');
+    const pwdInput = document.getElementById('pwd');
+    const loginHint = document.getElementById('loginHint');
+
+    const nameDisplay = document.getElementById('nameDisplay');
+    const recipientInput = document.getElementById('recipient');
+    const saveNameBtn = document.getElementById('saveNameBtn');
+    const greetingEl = document.getElementById('greeting');
+    const confettiEl = document.getElementById('confetti');
+
+    // Show the gift screen after a successful login
+    function showGiftScreen() {
+      loginScreen.style.display = 'none';
+      giftScreen.style.display = 'flex';
+      giftScreen.classList.remove('hidden');
+      isAuthenticated = true;
+
+      // Load saved name
+      const savedName = localStorage.getItem('giftName') || 'Darling';
+      nameDisplay.textContent = savedName;
+      recipientInput.value = savedName;
+      // Update greeting
+      greetingEl.textContent = Happy Birthday, ${savedName}!;
+      // Launch a small confetti burst
+      launchConfetti();
+    }
+
+    function showLoginScreen() {
+      loginScreen.style.display = 'flex';
+      giftScreen.style.display = 'none';
+      giftScreen.classList.add('hidden');
+      isAuthenticated = false;
+      pwdInput.value = '';
+      loginHint.textContent = '';
+      // Focus password for quick re-login
+      pwdInput.focus({ preventScroll: true });
+    }
+
+    // Simple confetti (hearts) animation
+    function launchConfetti() {
+      confettiEl.innerHTML = '';
+      const count = 22;
+      for (let i = 0; i < count; i++) {
+        const span = document.createElement('span');
+        span.textContent = '💖';
+        const left = Math.random() * 100;
+        span.style.left = left + '%';
+        span.style.setProperty('--dx', (Math.random() * 80 - 40) + 'px');
+        // Random duration
+        const duration = (Math.random() * 2 + 2.5).toFixed(2) + 's';
+        span.style.animationDuration = duration;
+        confettiEl.appendChild(span);
+      }
+      // Remove confetti after animation completes
+      setTimeout(() => { confettiEl.innerHTML = ''; }, 5000);
+    }
+
+    // Event: login
+    loginBtn.addEventListener('click', () => {
+      const input = pwdInput.value;
+      if (input === PASSWORD) {
+        showGiftScreen();
+      } else {
+        loginHint.textContent = 'Incorrect password. Please try again.';
+      }
+    });
+
+    // Allow Enter to submit password
+    pwdInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        loginBtn.click();
+      }
+    });
+
+    // Persist name
+    saveNameBtn.addEventListener('click', () => {
+      const name = (recipientInput.value || 'Darling').trim();
+      localStorage.setItem('giftName', name);
+      nameDisplay.textContent = name;
+      greetingEl.textContent = Happy Birthday, ${name}!;
+    });
+
+    // Security: re-prompt password on tab blur/visibility changes
+    function lockIfNeeded() {
+      if (isAuthenticated) {
+        showLoginScreen();
+      }
+    }
+
+    window.addEventListener('blur', lockIfNeeded);
+    window.addEventListener('focus', () => {
+      // Optional: either keep it locked on focus, or require re-enter
+      // We'll keep it locked until user re-authenticates
+      // If you want to auto-re-auth, implement autoShowUnlocked after a timeout
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        if (isAuthenticated) showLoginScreen();
+      } else if (document.visibilityState === 'visible') {
+        if (isAuthenticated) showLoginScreen();
+      }
+    });
+
+    // Init: show login
+    showLoginScreen();
+  </script>
+</body>
+</html>
